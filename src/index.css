@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+@media print {
+    @page {
+        margin: 0;
+        size: auto;
+    }
+
+    body {
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+
+    #resume-preview {
+        display: grid !important;
+        grid-template-columns: 32% 1fr !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: 100vh !important;
+        background: linear-gradient(to right, #0e2a5c 32%, white 32%) !important;
+    }
+
+    #print-sidebar,
+    #print-main {
+        background: transparent !important;
+    }
+}
