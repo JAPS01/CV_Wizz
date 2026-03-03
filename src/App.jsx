@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   Download, Plus, Trash2, User, Briefcase, GraduationCap,
   Wrench, Globe, Mail, Phone, MapPin, Linkedin, Layout, Image as ImageIcon,
-  Upload, Save
+  Upload, Save, Award, Users
 } from 'lucide-react';
 
 // Script loader removed as we are using window.print()
@@ -29,6 +29,8 @@ export default function App() {
     },
     experience: [],
     education: [],
+    courses: [],
+    references: [],
     skills: [],
     languages: []
   });
@@ -128,8 +130,15 @@ export default function App() {
     reader.onload = (event) => {
       try {
         const importedData = JSON.parse(event.target.result);
-        // Basic validation could be added here
-        setResumeData(importedData);
+
+        // Backward compatibility: ensure new arrays exist even in old JSONs
+        const safeData = {
+          ...importedData,
+          courses: importedData.courses || [],
+          references: importedData.references || []
+        };
+
+        setResumeData(safeData);
       } catch (error) {
         console.error("Error parsing JSON:", error);
         alert("Error al leer el archivo JSON. Asegúrate de que sea un archivo válido.");
@@ -304,6 +313,8 @@ export default function App() {
                 { id: 'personal', icon: User, label: 'Perfil' },
                 { id: 'experience', icon: Briefcase, label: 'Exp.' },
                 { id: 'education', icon: GraduationCap, label: 'Edu.' },
+                { id: 'courses', icon: Award, label: 'Cursos' },
+                { id: 'references', icon: Users, label: 'Ref.' },
                 { id: 'skills', icon: Layout, label: 'Skills' },
               ].map(tab => (
                 <button
@@ -430,6 +441,62 @@ export default function App() {
                       <div className="grid grid-cols-2 gap-3 mt-3">
                         <InputGroup label="Inicio" value={edu.startDate} onChange={(e) => handleArrayChange('education', edu.id, 'startDate', e.target.value)} />
                         <InputGroup label="Fin" value={edu.endDate} onChange={(e) => handleArrayChange('education', edu.id, 'endDate', e.target.value)} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {activeTab === 'courses' && (
+                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+                  <button
+                    onClick={() => addItem('courses', { id: Date.now(), name: "Nombre del curso o certificado", date: "YYYY-MM" })}
+                    className="w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 font-medium hover:border-blue-500 hover:text-blue-500 transition-colors flex justify-center items-center gap-2"
+                  >
+                    <Plus className="w-4 h-4" /> Agregar Curso/Certificado
+                  </button>
+
+                  {resumeData.courses && resumeData.courses.map((course) => (
+                    <div key={course.id} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm relative group">
+                      <button
+                        onClick={() => removeItem('courses', course.id)}
+                        className="absolute top-2 right-2 text-gray-400 hover:text-red-500 p-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                      <InputGroup label="Nombre del curso o certificado" value={course.name} onChange={(e) => handleArrayChange('courses', course.id, 'name', e.target.value)} />
+                      <div className="mt-3">
+                        <InputGroup label="Fecha de realización" type="text" placeholder="YYYY-MM" value={course.date} onChange={(e) => handleArrayChange('courses', course.id, 'date', e.target.value)} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {activeTab === 'references' && (
+                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+                  <button
+                    onClick={() => addItem('references', { id: Date.now(), name: "Nombre", role: "Cargo", company: "Empresa", contact: "Contacto" })}
+                    className="w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 font-medium hover:border-blue-500 hover:text-blue-500 transition-colors flex justify-center items-center gap-2"
+                  >
+                    <Plus className="w-4 h-4" /> Agregar Referencia
+                  </button>
+
+                  {resumeData.references && resumeData.references.map((ref) => (
+                    <div key={ref.id} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm relative group">
+                      <button
+                        onClick={() => removeItem('references', ref.id)}
+                        className="absolute top-2 right-2 text-gray-400 hover:text-red-500 p-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                      <div className="grid grid-cols-2 gap-3 mb-3">
+                        <InputGroup label="Nombre" value={ref.name} onChange={(e) => handleArrayChange('references', ref.id, 'name', e.target.value)} />
+                        <InputGroup label="Cargo" value={ref.role} onChange={(e) => handleArrayChange('references', ref.id, 'role', e.target.value)} />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <InputGroup label="Empresa" value={ref.company} onChange={(e) => handleArrayChange('references', ref.id, 'company', e.target.value)} />
+                        <InputGroup label="Contacto" value={ref.contact} onChange={(e) => handleArrayChange('references', ref.id, 'contact', e.target.value)} />
                       </div>
                     </div>
                   ))}
@@ -638,6 +705,87 @@ export default function App() {
                     ))}
                   </div>
                 </div>
+
+                {/* Courses & References */}
+                {(resumeData.courses && resumeData.courses.length > 0) && (resumeData.references && resumeData.references.length > 0) ? (
+                  <div className="mt-8 grid grid-cols-2 gap-8">
+                    {/* Courses (Side-by-side) */}
+                    <div>
+                      <SectionTitleDark icon={Award}>Cursos y Certificaciones</SectionTitleDark>
+                      <div className="space-y-4 mt-4">
+                        {resumeData.courses.map((course) => (
+                          <div key={course.id} className="flex gap-4" style={{ pageBreakInside: 'avoid' }}>
+                            <div className="w-16 flex-shrink-0 pt-1 text-right">
+                              <div className="text-xs font-bold text-slate-900 leading-tight">{course.date}</div>
+                            </div>
+                            <div className="flex-1 border-l-2 border-blue-100 pl-4 relative">
+                              <div className="absolute -left-[5px] top-[6px] w-2 h-2 rounded-full bg-blue-600"></div>
+                              <h3 className="font-bold text-slate-800 text-sm leading-tight">{course.name}</h3>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* References (Side-by-side) */}
+                    <div>
+                      <SectionTitleDark icon={Users}>Referencias Personales</SectionTitleDark>
+                      <div className="space-y-5 mt-4">
+                        {resumeData.references.map((ref) => (
+                          <div key={ref.id} style={{ pageBreakInside: 'avoid' }}>
+                            <h3 className="font-bold text-slate-800 text-sm">{ref.name}</h3>
+                            <div className="text-sm text-slate-600 font-medium">{ref.role}</div>
+                            <div className="text-xs text-blue-600 mb-1">{ref.company}</div>
+                            <div className="text-xs text-gray-500 flex items-center gap-1">
+                              <Phone className="w-3 h-3" /> {ref.contact}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {/* Courses & Certifications (Solo) */}
+                    {resumeData.courses && resumeData.courses.length > 0 && (
+                      <div className="mt-8">
+                        <SectionTitleDark icon={Award}>Cursos y Certificaciones</SectionTitleDark>
+                        <div className="space-y-4 mt-4">
+                          {resumeData.courses.map((course) => (
+                            <div key={course.id} className="flex gap-4" style={{ pageBreakInside: 'avoid' }}>
+                              <div className="w-24 flex-shrink-0 pt-1 text-right">
+                                <div className="text-xs font-bold text-slate-900">{course.date}</div>
+                              </div>
+                              <div className="flex-1 border-l-2 border-blue-100 pl-4 relative">
+                                <div className="absolute -left-[5px] top-[6px] w-2 h-2 rounded-full bg-blue-600"></div>
+                                <h3 className="font-bold text-slate-800 text-sm">{course.name}</h3>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* References (Solo) */}
+                    {resumeData.references && resumeData.references.length > 0 && (
+                      <div className="mt-8">
+                        <SectionTitleDark icon={Users}>Referencias Personales</SectionTitleDark>
+                        <div className="grid grid-cols-2 gap-6 mt-4">
+                          {resumeData.references.map((ref) => (
+                            <div key={ref.id} style={{ pageBreakInside: 'avoid' }}>
+                              <h3 className="font-bold text-slate-800 text-sm">{ref.name}</h3>
+                              <div className="text-sm text-slate-600 font-medium">{ref.role}</div>
+                              <div className="text-xs text-blue-600 mb-1">{ref.company}</div>
+                              <div className="text-xs text-gray-500 flex items-center gap-1">
+                                <Phone className="w-3 h-3" /> {ref.contact}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
 
               </div>
 
